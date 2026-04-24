@@ -14,10 +14,14 @@ ${C_GRAY}───────────────────────�
   ${C_GREEN}fact${C_RESET}           Random fun fact (tgpt)
   ${C_GREEN}weather${C_RESET} [city] Current weather (wttr.in)
   ${C_GREEN}sysinfo${C_RESET}        System info (neofetch if available)
+  ${C_GREEN}motd${C_RESET}           Reprint the banner (logo + sysinfo + disk)
+  ${C_GREEN}time${C_RESET} / ${C_GREEN}date${C_RESET}    Current date and time
   ${C_GREEN}ls${C_RESET} / ${C_GREEN}ll${C_RESET}       List files with icons
   ${C_GREEN}cd${C_RESET} <dir>       Change directory
   ${C_GREEN}clear${C_RESET} / ${C_GREEN}cls${C_RESET}   Clear screen
   ${C_GREEN}voice${C_RESET} on|off   Toggle JARVIS voice
+  ${C_GREEN}theme${C_RESET} [name]   List / switch prompt theme
+  ${C_GREEN}update${C_RESET}         git pull + re-run installer
   ${C_GREEN}whoami${C_RESET}         Show logged-in user
   ${C_GREEN}reset-auth${C_RESET}     Reset username/password
   ${C_GREEN}exit${C_RESET} / ${C_GREEN}quit${C_RESET}   Shut down KSUI

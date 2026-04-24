@@ -70,10 +70,19 @@ backup_file() {
 
 install_font() {
   (( KSUI_SKIP_FONT )) && { info "Skipping font install (KSUI_SKIP_FONT=1)"; return; }
-  need_cmd curl || { warn "curl missing, cannot fetch font"; return; }
   mkdir -p "$TERMUX_DIR"
 
   local font_dest="$TERMUX_DIR/font.ttf"
+  local bundled="$INSTALL_DIR/assets/fonts/FiraCodeNerdFont-Regular.ttf"
+
+  # Prefer the bundled font — offline, no network, no flake
+  if [[ -f $bundled ]]; then
+    backup_file "$font_dest"
+    cp "$bundled" "$font_dest" && say "Installed bundled FiraCode Nerd Font"
+    return
+  fi
+
+  need_cmd curl || { warn "curl missing and no bundled font, cannot install font"; return; }
   backup_file "$font_dest"
 
   info "Downloading FiraCode Nerd Font (required for icons + JARVIS glyphs)…"

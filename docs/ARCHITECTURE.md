@@ -21,8 +21,7 @@ ksui/
 │   └── motd.d/
 │       ├── 10-ksui-logo      # big KASHSIGHT banner
 │       ├── 20-sysinfo        # distro/host/kernel/load/mem/cpu
-│       ├── 25-datetime       # date + time panel
-│       └── 35-diskspace      # filtered disk-usage bars
+│       └── 35-diskspace      # filtered disk-usage (compact)
 ├── zsh/
 │   ├── ksh.zsh               # the KSH framework (replaces oh-my-zsh)
 │   ├── zshrc.template        # the managed # KSUI-BEGIN/END block
