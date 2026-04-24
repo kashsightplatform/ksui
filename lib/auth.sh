@@ -13,6 +13,40 @@ auth::_hash() {
   fi
 }
 
+# Read a password while echoing `*` per keystroke. Supports backspace.
+# Usage: auth::_read_password "  🔑 Password: " VARNAME
+auth::_read_password() {
+  local prompt=$1 __outvar=$2
+  local pw="" char
+  printf '%s' "$prompt"
+  # Turn off canonical mode + echo so we can handle each byte
+  stty -echo -icanon min 1 time 0 2>/dev/null
+  while IFS= read -r -n1 char; do
+    # Enter = done (some terminals send empty when Enter pressed in raw mode)
+    if [[ -z $char ]]; then
+      break
+    fi
+    # Backspace (DEL 0x7f or ^H 0x08)
+    if [[ $char == $'\x7f' || $char == $'\b' ]]; then
+      if [[ -n $pw ]]; then
+        pw=${pw%?}
+        printf '\b \b'
+      fi
+      continue
+    fi
+    # Ignore other control chars
+    if [[ $char == $'\x03' ]]; then  # Ctrl-C
+      stty sane 2>/dev/null
+      printf '\n'; return 130
+    fi
+    pw+=$char
+    printf '*'
+  done
+  stty sane 2>/dev/null
+  printf '\n'
+  printf -v "$__outvar" '%s' "$pw"
+}
+
 auth::setup() {
   mkdir -p "$KSUI_CFG"
   chmod 700 "$KSUI_CFG"
@@ -25,8 +59,8 @@ auth::setup() {
     [[ -n $u ]] && break
   done
   while :; do
-    read -r -s -p "  🔑 Choose a password: " p; echo
-    read -r -s -p "  🔑 Confirm password : " p2; echo
+    auth::_read_password "  🔑 Choose a password: " p
+    auth::_read_password "  🔑 Confirm password : " p2
     if [[ -z $p ]]; then
       ui::say_status ERR "Password cannot be empty"
     elif [[ $p != "$p2" ]]; then
@@ -56,7 +90,7 @@ auth::login() {
     printf "  ${C_BLUE}🔐 KSUI Authentication${C_RESET}\n"
     ui::hr
     read -r -p "  👤 Username: " u
-    read -r -s -p "  🔑 Password: " p; echo
+    auth::_read_password "  🔑 Password: " p
     if [[ $u == "$KSUI_USER" && "$(auth::_hash "$p")" == "$KSUI_HASH" ]]; then
       export KSUI_USER
       command -v sound::chime >/dev/null 2>&1 && sound::chime
