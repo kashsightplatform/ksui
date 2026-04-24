@@ -1,0 +1,12 @@
+#!/data/data/com.termux/files/usr/bin/env bash
+# KSUI datetime panel
+
+C=$'\e[1;36m'; W=$'\e[0;39m'; G=$'\e[1;32m'; B=$'\033[1m'; R=$'\033[0m'
+
+NOW_DATE=$(date '+%A, %d %B %Y')
+NOW_TIME=$(date '+%H:%M:%S')
+NOW_TZ=$(date '+%Z')
+
+printf "\n${B}Date & Time:${R}\n"
+printf "${C}  Date      : ${W}%s\n" "$NOW_DATE"
+printf "${C}  Time      : ${G}%s${W} (%s)\n" "$NOW_TIME" "$NOW_TZ"

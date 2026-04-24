@@ -188,6 +188,8 @@ pkg_install_if_missing tgpt tgpt
 pkg_install_if_missing espeak espeak
 pkg_install_if_missing openssl-tool openssl
 pkg_install_if_missing sox play
+pkg_install_if_missing fzf fzf
+pkg_install_if_missing fd fd
 
 # --- 2. fetch repo ---
 if [[ -d $INSTALL_DIR/.git ]]; then

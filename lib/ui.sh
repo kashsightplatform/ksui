@@ -20,17 +20,20 @@ ui::hr() {
 }
 
 ui::banner() {
-  local file="${KSUI_HOME}/assets/banner.txt"
-  if command -v lolcat >/dev/null 2>&1; then
-    [[ -f $file ]] && lolcat "$file" || true
+  # Full motd-style splash: big KASHSIGHT logo + sysinfo + disk panel
+  local motd="${KSUI_HOME}/motd/init.sh"
+  if [[ -x $motd ]]; then
+    "$motd"
   else
+    local file="${KSUI_HOME}/assets/banner.txt"
     [[ -f $file ]] && printf "${C_CYAN}%s${C_RESET}\n" "$(cat "$file")"
   fi
 }
 
-ui::jarvis_face() {
-  [[ -f ${KSUI_HOME}/assets/jarvis.txt ]] && \
-    printf "${C_BLUE}%s${C_RESET}\n" "$(cat "${KSUI_HOME}/assets/jarvis.txt")"
+ui::small_banner() {
+  # Compact banner for status lines (post-login, etc)
+  local file="${KSUI_HOME}/assets/banner.txt"
+  [[ -f $file ]] && printf "${C_CYAN}%s${C_RESET}\n" "$(cat "$file")"
 }
 
 ui::maker_intro() {

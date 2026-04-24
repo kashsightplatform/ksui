@@ -50,6 +50,11 @@ if (( ! ${KSH_SKIP_Z:-0} )); then
   [[ -f "$KSH_HOME/plugins/z/z.sh" ]] && source "$KSH_HOME/plugins/z/z.sh"
 fi
 
+if (( ! ${KSH_SKIP_FZF:-0} )); then
+  [[ -f "$KSH_HOME/plugins/fzf/fzf.zsh" ]] && \
+    source "$KSH_HOME/plugins/fzf/fzf.zsh"
+fi
+
 # Syntax highlighting MUST load last (it hooks the line editor)
 if (( ! ${KSH_SKIP_SYNTAX:-0} )); then
   [[ -f "$KSH_HOME/plugins/syntax-highlighting/syntax-highlighting.zsh" ]] && \
@@ -58,7 +63,15 @@ fi
 
 # ── 5. prompt theme ──────────────────────────────────────────────────────
 if (( ! ${KSH_SKIP_THEME:-0} )); then
-  [[ -f "$KSH_HOME/themes/ksui.zsh-theme" ]] && source "$KSH_HOME/themes/ksui.zsh-theme"
+  # Theme selection: ~/.ksui/theme  (written by `ksui theme <name>`)
+  local _ksh_theme="ksui"
+  [[ -f "$HOME/.ksui/theme" ]] && _ksh_theme=$(<"$HOME/.ksui/theme")
+  if [[ -f "$KSH_HOME/themes/${_ksh_theme}.zsh-theme" ]]; then
+    source "$KSH_HOME/themes/${_ksh_theme}.zsh-theme"
+  elif [[ -f "$KSH_HOME/themes/ksui.zsh-theme" ]]; then
+    source "$KSH_HOME/themes/ksui.zsh-theme"
+  fi
+  unset _ksh_theme
 fi
 
 # ── 6. aliases ───────────────────────────────────────────────────────────

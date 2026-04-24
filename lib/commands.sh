@@ -109,3 +109,68 @@ cmd::voice_toggle() {
 cmd::whoami() {
   printf "  ${C_CYAN}%s${C_RESET} (KSUI session)\n" "${KSUI_USER:-unknown}"
 }
+
+cmd::update() {
+  if [[ ! -d $KSUI_HOME/.git ]]; then
+    ui::say_status ERR "Not a git install — cannot self-update."
+    ui::say_status INFO "Re-run the installer manually to update."
+    return 1
+  fi
+  ui::say_status INFO "Fetching latest from origin…"
+  if git -C "$KSUI_HOME" pull --ff-only; then
+    ui::say_status OK "KSUI is now up to date."
+    if [[ -x $KSUI_HOME/install/install.sh ]]; then
+      ui::say_status INFO "Re-running installer to refresh assets…"
+      KSUI_REPO="$KSUI_HOME" KSUI_INSTALL_DIR="$KSUI_HOME" \
+        bash "$KSUI_HOME/install/install.sh" || true
+    fi
+  else
+    ui::say_status ERR "git pull failed — resolve conflicts and retry."
+    return 1
+  fi
+}
+
+cmd::theme() {
+  local themes_dir="$KSUI_HOME/zsh/themes"
+  local cfg="$HOME/.ksui/theme"
+  local name="${1:-}"
+
+  # list available themes
+  local -a available=()
+  if [[ -d $themes_dir ]]; then
+    for f in "$themes_dir"/*.zsh-theme; do
+      [[ -f $f ]] || continue
+      available+=("$(basename "$f" .zsh-theme)")
+    done
+  fi
+
+  if [[ -z $name ]]; then
+    local current=""
+    [[ -f $cfg ]] && current=$(cat "$cfg")
+    printf "${C_CYAN}Available themes:${C_RESET}\n"
+    for t in "${available[@]}"; do
+      if [[ $t == "${current:-ksui}" ]]; then
+        printf "  ${C_GREEN}●${C_RESET} %s ${C_DIM}(active)${C_RESET}\n" "$t"
+      else
+        printf "  ${C_DIM}○${C_RESET} %s\n" "$t"
+      fi
+    done
+    printf "\n${C_DIM}Use: ksui theme <name>${C_RESET}\n"
+    return 0
+  fi
+
+  # switch
+  local chosen=""
+  for t in "${available[@]}"; do
+    [[ $t == "$name" ]] && chosen=$t && break
+  done
+  if [[ -z $chosen ]]; then
+    ui::say_status ERR "Unknown theme: $name"
+    ui::say_status INFO "Available: ${available[*]}"
+    return 1
+  fi
+  mkdir -p "$(dirname "$cfg")"
+  printf '%s\n' "$chosen" > "$cfg"
+  ui::say_status OK "Theme set to: $chosen"
+  ui::say_status INFO "Open a new shell (or run: exec zsh) to see it."
+}

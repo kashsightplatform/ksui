@@ -22,7 +22,7 @@ export KSUI_SOUNDS="${KSUI_SOUNDS:-1}"
 
 ksui::boot_sequence() {
   clear
-  ui::banner
+  ui::banner           # full motd: logo + sysinfo + datetime + disk
   sound::power_on
   printf "\n${C_DIM}  initializing subsystems...${C_RESET}\n"
   local steps=(
@@ -44,10 +44,9 @@ ksui::boot_sequence() {
 ksui::post_login() {
   clear
   ui::banner
-  ui::jarvis_face
   voice::greet
   ui::maker_intro
-  printf "\n  ${C_DIM}Type ${C_RESET}${C_GREEN}help${C_RESET}${C_DIM} to see commands. ${C_RESET}${C_GREEN}exit${C_RESET}${C_DIM} to leave.${C_RESET}\n\n"
+  printf "\n  ${C_DIM}Type ${C_RESET}${C_GREEN}help${C_RESET}${C_DIM} for commands. ${C_RESET}${C_GREEN}exit${C_RESET}${C_DIM} to leave.${C_RESET}\n\n"
 }
 
 ksui::repl() {
@@ -56,7 +55,6 @@ ksui::repl() {
     ui::prompt_char
     IFS= read -r line || { echo; break; }
     [[ -z ${line// } ]] && continue
-    # split first token from rest
     cmd=${line%% *}
     if [[ $line == *" "* ]]; then args=${line#* }; else args=""; fi
 
@@ -69,11 +67,15 @@ ksui::repl() {
       fact)         cmd::fact ;;
       weather)      cmd::weather $args ;;
       sysinfo|sys)  cmd::sysinfo ;;
+      motd)         ui::banner ;;
+      time|date)    date ;;
       ls)           ui::ls $args ;;
       ll)           ui::ll $args ;;
       cd)           cd "${args:-$HOME}" || ui::say_status ERR "cd failed" ;;
       clear|cls)    clear; ui::banner ;;
       voice)        cmd::voice_toggle $args ;;
+      theme)        cmd::theme $args ;;
+      update)       cmd::update ;;
       whoami)       cmd::whoami ;;
       reset-auth)   auth::reset; exit 0 ;;
       exit|quit|bye)
@@ -84,21 +86,66 @@ ksui::repl() {
         break
         ;;
       *)
-        # Fallback: run as shell command
         eval "$line"
         ;;
     esac
   done
 }
 
+ksui::usage() {
+  cat <<EOF
+ksui — Kashsight UI shell
+
+USAGE:
+  ksui                    Launch interactive shell (login + REPL)
+  ksui ask <question...>  One-shot: ask JARVIS, print answer, exit
+  ksui joke               One-shot: print a joke and exit
+  ksui fact               One-shot: print a fun fact and exit
+  ksui weather [city]     One-shot: print weather and exit
+  ksui sysinfo            One-shot: print system info and exit
+  ksui motd               One-shot: print the motd banner and exit
+  ksui update             Pull latest from GitHub + re-run installer
+  ksui theme [name]       List or switch prompt themes (jarvis|minimal|cyberpunk)
+
+FLAGS:
+  --no-voice      Start with voice muted
+  --no-sounds     Disable sound effects
+  --reset-auth    Clear saved credentials
+  --version, -v   Print version
+  --help, -h      Print this help
+EOF
+}
+
 main() {
+  # Parse flags that can appear before a subcommand
+  local passthrough=()
+  while (( $# )); do
+    case "${1:-}" in
+      --version|-v) echo "ksui 0.2.0"; exit 0 ;;
+      --help|-h)    ksui::usage; exit 0 ;;
+      --reset-auth) auth::reset; exit 0 ;;
+      --no-voice)   export KSUI_VOICE=0; shift ;;
+      --no-sounds)  export KSUI_SOUNDS=0; shift ;;
+      *)            passthrough+=("$1"); shift ;;
+    esac
+  done
+  set -- "${passthrough[@]:-}"
+
+  # One-shot mode: `ksui ask ...`, `ksui joke`, etc.
   case "${1:-}" in
-    --version|-v) echo "ksui 0.1.0"; exit 0 ;;
-    --help|-h)    cmd::help; exit 0 ;;
-    --reset-auth) auth::reset; exit 0 ;;
-    --no-voice)   export KSUI_VOICE=0 ;;
+    ask)       shift; cmd::ask "$@"; exit $? ;;
+    joke)      cmd::joke; exit $? ;;
+    fact)      cmd::fact; exit $? ;;
+    weather)   shift; cmd::weather "$@"; exit $? ;;
+    sysinfo)   cmd::sysinfo; exit $? ;;
+    motd)      ui::banner; exit 0 ;;
+    update)    cmd::update; exit $? ;;
+    theme)     shift; cmd::theme "$@"; exit $? ;;
+    "")        : ;;   # fallthrough to interactive
+    *)         ksui::usage; exit 1 ;;
   esac
 
+  # Interactive mode
   ksui::boot_sequence
   auth::login || exit 1
   ksui::post_login
