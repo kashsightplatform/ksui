@@ -1,13 +1,13 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # KSUI installer
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/kashsight/ksui/main/install/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/kashsightplatform/ksui/main/install/install.sh | bash
 #
 # Non-destructive: only installs missing packages, never removes or
 # downgrades anything you already have.
 set -euo pipefail
 
-REPO="${KSUI_REPO:-https://github.com/kashsight/ksui.git}"
+REPO="${KSUI_REPO:-https://github.com/kashsightplatform/ksui.git}"
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 INSTALL_DIR="${KSUI_INSTALL_DIR:-$HOME/.ksui-app}"
 BIN_LINK="$PREFIX/bin/ksui"

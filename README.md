@@ -34,13 +34,13 @@
 One-line install (Termux / Debian / Ubuntu):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kashsight/ksui/main/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kashsightplatform/ksui/main/install/install.sh | bash
 ```
 
 Or manually:
 
 ```bash
-git clone https://github.com/kashsight/ksui.git ~/.ksui-app
+git clone https://github.com/kashsightplatform/ksui.git ~/.ksui-app
 ln -sf ~/.ksui-app/bin/ksui $PREFIX/bin/ksui
 ```
 

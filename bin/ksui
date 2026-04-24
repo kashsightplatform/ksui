@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # KSUI — Kashsight UI shell (JARVIS-inspired)
-# https://github.com/kashsight/ksui
+# https://github.com/kashsightplatform/ksui
 
 set -u
 
