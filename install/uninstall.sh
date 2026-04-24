@@ -65,15 +65,28 @@ restore_or_remove "$TERMUX_DIR/font.ttf"
 restore_or_remove "$TERMUX_DIR/colors.properties"
 restore_or_remove "$TERMUX_DIR/termux.properties"
 
-# 2b. strip KSUI block from ~/.zshrc
+# 2b. strip KSUI block from ~/.zshrc (including its header comments + surrounding blank lines)
 zshrc="$HOME/.zshrc"
 if [[ -f $zshrc ]] && grep -q '# KSUI-BEGIN' "$zshrc"; then
   tmp="${zshrc}.ksui.tmp"
   awk '
-    /# KSUI-BEGIN/ { in_block=1; next }
-    /# KSUI-END/   { in_block=0; next }
-    !in_block      { print }
-  ' "$zshrc" > "$tmp" && mv "$tmp" "$zshrc" && \
+    # Header comments that precede # KSUI-BEGIN — buffer them so we can drop them
+    /^# ─+$/        { hdr[++h]=$0; next }
+    /^# KSUI block/ { hdr[++h]=$0; next }
+    /^# Everything/ { hdr[++h]=$0; next }
+    /# KSUI-BEGIN/  { in_block=1; h=0; next }
+    /# KSUI-END/    { in_block=0; next }
+    !in_block {
+      if (h) { for (i=1;i<=h;i++) print hdr[i]; h=0 }
+      print
+    }
+  ' "$zshrc" > "$tmp"
+  # Collapse trailing blank lines
+  awk 'NR==FNR{lines[NR]=$0; last=NR; next}' "$tmp" "$tmp" >/dev/null
+  # Simpler: trim trailing blanks with sed
+  sed -i -e :a -e '/^$/{$d;N;ba' -e '}' "$tmp" 2>/dev/null || \
+    sed -i '' -e :a -e '/^$/{$d;N;ba' -e '}' "$tmp" 2>/dev/null || true
+  mv "$tmp" "$zshrc"
   say "Removed KSUI block from $zshrc"
 fi
 command -v termux-reload-settings >/dev/null 2>&1 && \
