@@ -4,8 +4,12 @@
 
 W=$'\e[0;39m'; G=$'\e[1;32m'; C=$'\e[1;36m'; B=$'\033[1m'; R=$'\033[0m'
 
-# Load averages
-read -r _ _ _ _ _ _ _ _ LOAD1 LOAD5 LOAD15 < <(uptime | tr -d ',')
+# Load averages (robust: "load average:" may be preceded by users/uptime/etc)
+read -r LOAD1 LOAD5 LOAD15 < <(
+  uptime 2>/dev/null \
+    | sed -E 's/.*load average[s]?: *//I; s/,/ /g' \
+    | awk '{print $1, $2, $3}'
+)
 
 # Memory
 read -r _ TOTAL USED _ _ _ AVAIL < <(free -htm 2>/dev/null | awk '/^Mem:/')
