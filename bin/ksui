@@ -1,0 +1,103 @@
+#!/data/data/com.termux/files/usr/bin/env bash
+# KSUI — Kashsight UI shell (JARVIS-inspired)
+# https://github.com/kashsight/ksui
+
+set -u
+
+# Resolve repo root (supports symlinked install)
+_self="${BASH_SOURCE[0]}"
+while [[ -L $_self ]]; do _self="$(readlink "$_self")"; done
+KSUI_HOME="$(cd "$(dirname "$_self")/.." && pwd)"
+export KSUI_HOME
+
+# shellcheck disable=SC1091
+source "$KSUI_HOME/lib/ui.sh"
+source "$KSUI_HOME/lib/voice.sh"
+source "$KSUI_HOME/lib/auth.sh"
+source "$KSUI_HOME/lib/commands.sh"
+
+export KSUI_VOICE="${KSUI_VOICE:-1}"
+
+ksui::boot_sequence() {
+  clear
+  ui::banner
+  printf "\n${C_DIM}  initializing subsystems...${C_RESET}\n"
+  local steps=(
+    "loading UI kernel"
+    "mounting voice module"
+    "calibrating neural net"
+    "handshake with tgpt"
+    "authentication ready"
+  )
+  for s in "${steps[@]}"; do
+    sleep 0.18
+    ui::say_status OK "$s"
+  done
+  sleep 0.3
+  echo
+}
+
+ksui::post_login() {
+  clear
+  ui::banner
+  ui::jarvis_face
+  voice::greet
+  ui::maker_intro
+  printf "\n  ${C_DIM}Type ${C_RESET}${C_GREEN}help${C_RESET}${C_DIM} to see commands. ${C_RESET}${C_GREEN}exit${C_RESET}${C_DIM} to leave.${C_RESET}\n\n"
+}
+
+ksui::repl() {
+  local line cmd args
+  while :; do
+    ui::prompt_char
+    IFS= read -r line || { echo; break; }
+    [[ -z ${line// } ]] && continue
+    # split first token from rest
+    cmd=${line%% *}
+    if [[ $line == *" "* ]]; then args=${line#* }; else args=""; fi
+
+    case "$cmd" in
+      help|h|?)     cmd::help ;;
+      about|intro)  cmd::about ;;
+      ask)          cmd::ask $args ;;
+      joke)         cmd::joke ;;
+      meme)         cmd::meme ;;
+      fact)         cmd::fact ;;
+      weather)      cmd::weather $args ;;
+      sysinfo|sys)  cmd::sysinfo ;;
+      ls)           ui::ls $args ;;
+      ll)           ui::ll $args ;;
+      cd)           cd "${args:-$HOME}" || ui::say_status ERR "cd failed" ;;
+      clear|cls)    clear; ui::banner ;;
+      voice)        cmd::voice_toggle $args ;;
+      whoami)       cmd::whoami ;;
+      reset-auth)   auth::reset; exit 0 ;;
+      exit|quit|bye)
+        voice::bye
+        ui::say_status INFO "Shutting down KSUI…"
+        sleep 0.6
+        break
+        ;;
+      *)
+        # Fallback: run as shell command
+        eval "$line"
+        ;;
+    esac
+  done
+}
+
+main() {
+  case "${1:-}" in
+    --version|-v) echo "ksui 0.1.0"; exit 0 ;;
+    --help|-h)    cmd::help; exit 0 ;;
+    --reset-auth) auth::reset; exit 0 ;;
+    --no-voice)   export KSUI_VOICE=0 ;;
+  esac
+
+  ksui::boot_sequence
+  auth::login || exit 1
+  ksui::post_login
+  ksui::repl
+}
+
+main "$@"
