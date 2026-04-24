@@ -1,0 +1,29 @@
+#!/data/data/com.termux/files/usr/bin/env bash
+# KSUI diskspace — bash port with simple ASCII bars (no Nerd Font required)
+
+max=95; alert=75; width=40
+g=$'\e[1;32m'; r=$'\e[1;31m'; y=$'\e[1;33m'; b=$'\033[1m'; nc=$'\033[0m'
+
+printf "\n${b}Disk Usage:${nc}\n"
+
+df -H 2>/dev/null | awk 'NR>1 && $1 !~ /tmpfs|devtmpfs|overlay|apex/ && $6 ~ /^\/$|^\/data$|^\/storage|^\/home/ {print}' | \
+while read -r _fs total used _avail pct mount; do
+  usage="${pct%\%}"
+  [[ $usage =~ ^[0-9]+$ ]] || continue
+
+  filled=$(( usage * width / 100 ))
+  empty=$(( width - filled ))
+
+  if   (( usage >= max ));   then color=$r
+  elif (( usage >= alert )); then color=$y
+  else                            color=$g
+  fi
+
+  bar="${color}["
+  for ((i=0; i<filled; i++)); do bar+="█"; done
+  for ((i=0; i<empty;  i++)); do bar+="░"; done
+  bar+="]${nc}"
+
+  printf "  %-30s %4s used / %4s total\n" "$mount" "$used" "$total"
+  printf "  %b %d%%\n" "$bar" "$usage"
+done

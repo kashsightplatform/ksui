@@ -1,0 +1,8 @@
+# ──────────────────────────────────────────────────────────────
+# KSUI block — added by the KSUI installer
+# Everything between BEGIN/END is managed; remove cleanly on uninstall.
+# ──────────────────────────────────────────────────────────────
+# KSUI-BEGIN
+export KSUI_HOME="__KSUI_INSTALL_DIR__"
+[[ -f "$KSUI_HOME/zsh/ksh.zsh" ]] && source "$KSUI_HOME/zsh/ksh.zsh"
+# KSUI-END

@@ -64,6 +64,18 @@ fi
 restore_or_remove "$TERMUX_DIR/font.ttf"
 restore_or_remove "$TERMUX_DIR/colors.properties"
 restore_or_remove "$TERMUX_DIR/termux.properties"
+
+# 2b. strip KSUI block from ~/.zshrc
+zshrc="$HOME/.zshrc"
+if [[ -f $zshrc ]] && grep -q '# KSUI-BEGIN' "$zshrc"; then
+  tmp="${zshrc}.ksui.tmp"
+  awk '
+    /# KSUI-BEGIN/ { in_block=1; next }
+    /# KSUI-END/   { in_block=0; next }
+    !in_block      { print }
+  ' "$zshrc" > "$tmp" && mv "$tmp" "$zshrc" && \
+  say "Removed KSUI block from $zshrc"
+fi
 command -v termux-reload-settings >/dev/null 2>&1 && \
   termux-reload-settings 2>/dev/null && say "Termux settings reloaded"
 

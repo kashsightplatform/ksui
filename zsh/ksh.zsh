@@ -1,0 +1,119 @@
+# KSH — Kashsight Shell framework
+# A small, self-contained zsh framework. Replaces oh-my-zsh for KSUI users.
+# Load it from ~/.zshrc with:
+#   source "$HOME/.ksui-app/zsh/ksh.zsh"
+#
+# What it loads (all opt-out via KSH_SKIP_*):
+#   • history sensible defaults
+#   • completion + menu select
+#   • vendored autosuggestions + syntax-highlighting
+#   • vendored `z` (frecent dir jump)
+#   • KSUI prompt theme
+#   • git / pkg / termux aliases
+#   • KSUI motd on new sessions
+
+: ${KSH_HOME:=${0:A:h}}
+export KSH_HOME
+
+# ── 1. history ────────────────────────────────────────────────────────────
+if (( ! ${KSH_SKIP_HISTORY:-0} )); then
+  HISTFILE=${HISTFILE:-$HOME/.zsh_history}
+  HISTSIZE=50000
+  SAVEHIST=50000
+  setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
+  setopt SHARE_HISTORY APPEND_HISTORY INC_APPEND_HISTORY
+fi
+
+# ── 2. completion ─────────────────────────────────────────────────────────
+if (( ! ${KSH_SKIP_COMPLETION:-0} )); then
+  autoload -Uz compinit
+  compinit -C 2>/dev/null
+  zstyle ':completion:*' menu select
+  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+  zstyle ':completion:*' list-colors ''
+fi
+
+# ── 3. key bindings ──────────────────────────────────────────────────────
+bindkey -e  # emacs-style by default
+bindkey '^[[A' up-line-or-history
+bindkey '^[[B' down-line-or-history
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
+# ── 4. plugins (all vendored under zsh/plugins/) ──────────────────────────
+if (( ! ${KSH_SKIP_AUTOSUGGEST:-0} )); then
+  [[ -f "$KSH_HOME/plugins/autosuggestions/autosuggestions.zsh" ]] && \
+    source "$KSH_HOME/plugins/autosuggestions/autosuggestions.zsh"
+fi
+
+if (( ! ${KSH_SKIP_Z:-0} )); then
+  [[ -f "$KSH_HOME/plugins/z/z.sh" ]] && source "$KSH_HOME/plugins/z/z.sh"
+fi
+
+# Syntax highlighting MUST load last (it hooks the line editor)
+if (( ! ${KSH_SKIP_SYNTAX:-0} )); then
+  [[ -f "$KSH_HOME/plugins/syntax-highlighting/syntax-highlighting.zsh" ]] && \
+    source "$KSH_HOME/plugins/syntax-highlighting/syntax-highlighting.zsh"
+fi
+
+# ── 5. prompt theme ──────────────────────────────────────────────────────
+if (( ! ${KSH_SKIP_THEME:-0} )); then
+  [[ -f "$KSH_HOME/themes/ksui.zsh-theme" ]] && source "$KSH_HOME/themes/ksui.zsh-theme"
+fi
+
+# ── 6. aliases ───────────────────────────────────────────────────────────
+if (( ! ${KSH_SKIP_ALIASES:-0} )); then
+  # ls with icons (lsd if available)
+  if command -v lsd >/dev/null 2>&1; then
+    alias ls='lsd --icon=always --icon-theme=unicode --group-dirs=first'
+    alias ll='lsd -l --icon=always --icon-theme=unicode --group-dirs=first'
+    alias la='lsd -la --icon=always --icon-theme=unicode --group-dirs=first'
+    alias lt='lsd --tree --icon=always --icon-theme=unicode'
+  else
+    alias ls='ls --color=auto'
+    alias ll='ls -lh --color=auto'
+    alias la='ls -lah --color=auto'
+  fi
+
+  # nav
+  alias ..='cd ..'
+  alias ...='cd ../..'
+  alias ....='cd ../../..'
+  alias c='clear'
+
+  # git
+  alias g='git'
+  alias gs='git status'
+  alias ga='git add'
+  alias gc='git commit'
+  alias gca='git commit --amend'
+  alias gp='git push'
+  alias gpl='git pull'
+  alias gl='git log --oneline --graph --decorate'
+  alias gd='git diff'
+  alias gb='git branch'
+  alias gco='git checkout'
+
+  # pkg (termux)
+  if command -v pkg >/dev/null 2>&1; then
+    alias pu='pkg update && pkg upgrade'
+    alias pi='pkg install'
+    alias pr='pkg remove'
+    alias ps='pkg search'
+  fi
+
+  # termux-api
+  if command -v termux-info >/dev/null 2>&1; then
+    alias tinfo='termux-info'
+    alias tbat='termux-battery-status'
+    alias twifi='termux-wifi-enable'
+    alias tloc='termux-location'
+  fi
+fi
+
+# ── 7. motd on new shell ─────────────────────────────────────────────────
+if (( ! ${KSH_SKIP_MOTD:-0} )) && [[ -o interactive ]]; then
+  _ksh_motd="$KSH_HOME/../motd/init.sh"
+  [[ -x $_ksh_motd ]] && "$_ksh_motd"
+  unset _ksh_motd
+fi

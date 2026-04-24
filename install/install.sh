@@ -20,6 +20,8 @@ KSUI_SKIP_FONT="${KSUI_SKIP_FONT:-0}"
 KSUI_SKIP_COLORS="${KSUI_SKIP_COLORS:-0}"
 KSUI_SKIP_SOUNDS="${KSUI_SKIP_SOUNDS:-0}"
 KSUI_SKIP_KEYS="${KSUI_SKIP_KEYS:-0}"
+KSUI_SKIP_KSH="${KSUI_SKIP_KSH:-0}"
+KSUI_SKIP_MOTD="${KSUI_SKIP_MOTD:-0}"
 
 say()  { printf "\033[38;5;120m✔\033[0m %s\n" "$*"; }
 warn() { printf "\033[38;5;221m⚠\033[0m %s\n" "$*"; }
@@ -131,6 +133,42 @@ reload_termux() {
   fi
 }
 
+install_ksh() {
+  (( KSUI_SKIP_KSH )) && { info "Skipping KSH shell framework (KSUI_SKIP_KSH=1)"; return; }
+  local zshrc="$HOME/.zshrc"
+  local tmpl="$INSTALL_DIR/zsh/zshrc.template"
+  [[ -f $tmpl ]] || return 0
+
+  # Build the KSUI block
+  local block
+  block=$(sed "s|__KSUI_INSTALL_DIR__|$INSTALL_DIR|g" "$tmpl")
+
+  # Backup existing .zshrc (once)
+  [[ -f $zshrc ]] && backup_file "$zshrc"
+
+  # If already has a KSUI block, replace it; else append
+  if [[ -f $zshrc ]] && grep -q '# KSUI-BEGIN' "$zshrc"; then
+    local tmp="${zshrc}.ksui.tmp"
+    awk -v block="$block" '
+      /# KSUI-BEGIN/ { in_block=1; print block; next }
+      /# KSUI-END/   { in_block=0; next }
+      !in_block      { print }
+    ' "$zshrc" > "$tmp" && mv "$tmp" "$zshrc"
+    say "Updated KSUI block in $zshrc"
+  else
+    printf '\n%s\n' "$block" >> "$zshrc"
+    say "Appended KSUI block to $zshrc"
+  fi
+}
+
+install_motd() {
+  (( KSUI_SKIP_MOTD )) && { info "Skipping motd (KSUI_SKIP_MOTD=1)"; return; }
+  # motd files ship in the repo under $INSTALL_DIR/motd — nothing to fetch.
+  # The KSH framework sources init.sh on new interactive shells automatically.
+  chmod +x "$INSTALL_DIR/motd/init.sh" "$INSTALL_DIR/motd/motd.d/"* 2>/dev/null || true
+  say "KSUI motd ready (shown on new interactive shells)"
+}
+
 banner
 hr
 say "Installing KSUI into: $INSTALL_DIR"
@@ -162,10 +200,12 @@ fi
 
 chmod +x "$INSTALL_DIR/bin/ksui"
 
-# --- 3. font + colors + sounds ---
+# --- 3. font + colors + sounds + ksh + motd ---
 install_font
 install_colors
 install_extra_keys
+install_motd
+install_ksh
 # sounds ship inside the repo — nothing else to fetch for them
 
 # --- 4. symlink into PATH ---
