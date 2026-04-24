@@ -59,11 +59,13 @@ auth::login() {
     read -r -s -p "  🔑 Password: " p; echo
     if [[ $u == "$KSUI_USER" && "$(auth::_hash "$p")" == "$KSUI_HASH" ]]; then
       export KSUI_USER
+      command -v sound::chime >/dev/null 2>&1 && sound::chime
       ui::say_status OK "Access granted. Welcome back, $KSUI_USER."
       sleep 0.6
       return 0
     fi
     ((tries--))
+    command -v sound::deny >/dev/null 2>&1 && sound::deny
     ui::say_status ERR "Invalid credentials. Attempts left: $tries"
   done
   ui::say_status ERR "Too many failed attempts. System lockdown."

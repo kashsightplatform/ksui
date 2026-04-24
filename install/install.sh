@@ -4,17 +4,27 @@
 #   curl -fsSL https://raw.githubusercontent.com/kashsightplatform/ksui/main/install/install.sh | bash
 #
 # Non-destructive: only installs missing packages, never removes or
-# downgrades anything you already have.
+# downgrades anything you already have. Existing Termux font and color
+# scheme are backed up (.ksui-backup) before being replaced so the
+# uninstaller can restore them.
 set -euo pipefail
 
 REPO="${KSUI_REPO:-https://github.com/kashsightplatform/ksui.git}"
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 INSTALL_DIR="${KSUI_INSTALL_DIR:-$HOME/.ksui-app}"
 BIN_LINK="$PREFIX/bin/ksui"
+TERMUX_DIR="${TERMUX_DIR:-$HOME/.termux}"
+
+# opt-outs
+KSUI_SKIP_FONT="${KSUI_SKIP_FONT:-0}"
+KSUI_SKIP_COLORS="${KSUI_SKIP_COLORS:-0}"
+KSUI_SKIP_SOUNDS="${KSUI_SKIP_SOUNDS:-0}"
+KSUI_SKIP_KEYS="${KSUI_SKIP_KEYS:-0}"
 
 say()  { printf "\033[38;5;120m✔\033[0m %s\n" "$*"; }
 warn() { printf "\033[38;5;221m⚠\033[0m %s\n" "$*"; }
 err()  { printf "\033[38;5;203m✖\033[0m %s\n" "$*" >&2; }
+info() { printf "\033[38;5;75mℹ\033[0m %s\n" "$*"; }
 hr()   { printf '\033[2m%s\033[0m\n' "────────────────────────────────────"; }
 
 banner() {
@@ -48,6 +58,79 @@ pkg_install_if_missing() {
   fi
 }
 
+backup_file() {
+  # backup_file <path>  → moves path → path.ksui-backup (only once)
+  local f=$1
+  [[ -e $f ]] || return 0
+  [[ -e $f.ksui-backup ]] && { info "Backup already exists: $f.ksui-backup"; return 0; }
+  cp -a "$f" "$f.ksui-backup" && say "Backed up $f → $f.ksui-backup"
+}
+
+install_font() {
+  (( KSUI_SKIP_FONT )) && { info "Skipping font install (KSUI_SKIP_FONT=1)"; return; }
+  need_cmd curl || { warn "curl missing, cannot fetch font"; return; }
+  mkdir -p "$TERMUX_DIR"
+
+  local font_dest="$TERMUX_DIR/font.ttf"
+  backup_file "$font_dest"
+
+  info "Downloading FiraCode Nerd Font (required for icons + JARVIS glyphs)…"
+  local tmp
+  tmp="$(mktemp -d "${TMPDIR:-$PREFIX/tmp}/ksui-font.XXXXXX")" || {
+    warn "Could not create tempdir, skipping font"; return; }
+
+  local zip_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip"
+  if curl -fsSL --retry 2 -o "$tmp/font.zip" "$zip_url"; then
+    if need_cmd unzip; then
+      unzip -jo "$tmp/font.zip" "FiraCodeNerdFont-Regular.ttf" -d "$tmp" >/dev/null 2>&1 || \
+      unzip -jo "$tmp/font.zip" "*Regular*.ttf" -d "$tmp" >/dev/null 2>&1 || true
+      local ttf
+      ttf="$(ls "$tmp"/*.ttf 2>/dev/null | head -n1 || true)"
+      if [[ -n $ttf ]]; then
+        cp "$ttf" "$font_dest" && say "Installed FiraCode Nerd Font"
+      else
+        warn "Font archive had no TTF inside, skipping"
+      fi
+    else
+      warn "unzip not installed, skipping font extraction"
+    fi
+  else
+    warn "Font download failed (network?), skipping"
+  fi
+  rm -rf "$tmp"
+}
+
+install_colors() {
+  (( KSUI_SKIP_COLORS )) && { info "Skipping color scheme (KSUI_SKIP_COLORS=1)"; return; }
+  [[ -f "$INSTALL_DIR/assets/colors.properties" ]] || return 0
+  mkdir -p "$TERMUX_DIR"
+
+  local dest="$TERMUX_DIR/colors.properties"
+  backup_file "$dest"
+  cp "$INSTALL_DIR/assets/colors.properties" "$dest" && \
+    say "Installed JARVIS-blue color scheme"
+}
+
+install_extra_keys() {
+  (( KSUI_SKIP_KEYS )) && { info "Skipping extra-keys layout (KSUI_SKIP_KEYS=1)"; return; }
+  [[ -f "$INSTALL_DIR/assets/termux.properties" ]] || return 0
+  mkdir -p "$TERMUX_DIR"
+
+  local dest="$TERMUX_DIR/termux.properties"
+  backup_file "$dest"
+  cp "$INSTALL_DIR/assets/termux.properties" "$dest" && \
+    say "Installed 3-row extra-keys layout"
+}
+
+reload_termux() {
+  if need_cmd termux-reload-settings; then
+    termux-reload-settings 2>/dev/null || true
+    say "Reloaded Termux settings (font + colors active)"
+  else
+    info "Run 'termux-reload-settings' or restart Termux to apply font/colors"
+  fi
+}
+
 banner
 hr
 say "Installing KSUI into: $INSTALL_DIR"
@@ -58,6 +141,7 @@ hr
 say "Checking dependencies (non-destructive — will NOT remove anything you already use)…"
 pkg_install_if_missing git git
 pkg_install_if_missing curl curl
+pkg_install_if_missing unzip unzip
 pkg_install_if_missing figlet figlet
 pkg_install_if_missing lolcat lolcat
 pkg_install_if_missing lsd lsd
@@ -65,6 +149,7 @@ pkg_install_if_missing neofetch neofetch
 pkg_install_if_missing tgpt tgpt
 pkg_install_if_missing espeak espeak
 pkg_install_if_missing openssl-tool openssl
+pkg_install_if_missing sox play
 
 # --- 2. fetch repo ---
 if [[ -d $INSTALL_DIR/.git ]]; then
@@ -77,7 +162,13 @@ fi
 
 chmod +x "$INSTALL_DIR/bin/ksui"
 
-# --- 3. symlink into PATH ---
+# --- 3. font + colors + sounds ---
+install_font
+install_colors
+install_extra_keys
+# sounds ship inside the repo — nothing else to fetch for them
+
+# --- 4. symlink into PATH ---
 if [[ -w $(dirname "$BIN_LINK") ]]; then
   ln -sf "$INSTALL_DIR/bin/ksui" "$BIN_LINK"
   say "Linked ksui → $BIN_LINK"
@@ -86,9 +177,12 @@ else
   printf '   export PATH="%s/bin:$PATH"\n' "$INSTALL_DIR"
 fi
 
-# --- 4. done ---
+# --- 5. reload termux so font/colors take effect ---
+reload_termux
+
+# --- 6. done ---
 hr
 say "KSUI installed successfully!"
 printf "\n  Run it with:  \033[1;36mksui\033[0m\n"
-printf "  Uninstall  :  \033[1;36mksui --help\033[0m or run the uninstaller\n\n"
+printf "  Uninstall  :  \033[1;36mbash %s/install/uninstall.sh\033[0m\n\n" "$INSTALL_DIR"
 printf "  Made by \033[38;5;215m⚡ KASHSIGHT ⚡\033[0m — youtube.com/@kashsight\n\n"

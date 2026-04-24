@@ -13,14 +13,17 @@ export KSUI_HOME
 # shellcheck disable=SC1091
 source "$KSUI_HOME/lib/ui.sh"
 source "$KSUI_HOME/lib/voice.sh"
+source "$KSUI_HOME/lib/sound.sh"
 source "$KSUI_HOME/lib/auth.sh"
 source "$KSUI_HOME/lib/commands.sh"
 
 export KSUI_VOICE="${KSUI_VOICE:-1}"
+export KSUI_SOUNDS="${KSUI_SOUNDS:-1}"
 
 ksui::boot_sequence() {
   clear
   ui::banner
+  sound::power_on
   printf "\n${C_DIM}  initializing subsystems...${C_RESET}\n"
   local steps=(
     "loading UI kernel"
@@ -32,6 +35,7 @@ ksui::boot_sequence() {
   for s in "${steps[@]}"; do
     sleep 0.18
     ui::say_status OK "$s"
+    sound::beep
   done
   sleep 0.3
   echo
@@ -74,6 +78,7 @@ ksui::repl() {
       reset-auth)   auth::reset; exit 0 ;;
       exit|quit|bye)
         voice::bye
+        sound::power_off
         ui::say_status INFO "Shutting down KSUI…"
         sleep 0.6
         break

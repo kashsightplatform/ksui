@@ -60,14 +60,19 @@ cmd::fact() {
 }
 
 cmd::meme() {
-  if ! command -v curl >/dev/null 2>&1; then
-    ui::say_status ERR "curl required for memes"; return 1
+  local url=""
+  if command -v curl >/dev/null 2>&1; then
+    url=$(curl -fsSL --max-time 5 https://meme-api.com/gimme 2>/dev/null | \
+          grep -oE '"url":"[^"]+"' | head -n1 | cut -d'"' -f4)
   fi
-  local url
-  url=$(curl -fsSL https://meme-api.com/gimme 2>/dev/null | \
-        grep -oE '"url":"[^"]+"' | head -n1 | cut -d'"' -f4)
+  # Fallback to bundled meme list
+  if [[ -z $url && -f ${KSUI_HOME}/assets/memes.txt ]]; then
+    url=$(shuf -n1 "${KSUI_HOME}/assets/memes.txt" 2>/dev/null || \
+          awk 'NR==int(rand()*NR)+1' "${KSUI_HOME}/assets/memes.txt")
+    ui::say_status INFO "Using bundled meme (API unreachable)"
+  fi
   if [[ -z $url ]]; then
-    ui::say_status ERR "Could not fetch meme"; return 1
+    ui::say_status ERR "No meme available"; return 1
   fi
   printf "${C_MAGENTA}🖼  Meme:${C_RESET} %s\n" "$url"
   if command -v termux-open-url >/dev/null 2>&1; then
