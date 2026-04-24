@@ -1,7 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/env bash
-# KSUI diskspace — compact, one line per mount
+# KSUI diskspace — inline mini-bar + compact "used out of total"
 
-b=$'\033[1m'; c=$'\e[1;36m'; w=$'\e[0;39m'; g=$'\e[1;32m'; y=$'\e[1;33m'; r=$'\e[1;31m'; nc=$'\033[0m'
+b=$'\033[1m'; c=$'\e[1;36m'; w=$'\e[0;39m'; g=$'\e[1;32m'; y=$'\e[1;33m'; r=$'\e[1;31m'; d=$'\e[2m'; nc=$'\033[0m'
+
+width=10  # bar cells
 
 printf "\n${b}Disk Usage:${nc}\n"
 
@@ -10,10 +12,20 @@ df -H 2>/dev/null \
   | while read -r _fs total used _avail pct mount; do
       usage="${pct%\%}"
       [[ $usage =~ ^[0-9]+$ ]] || continue
+
       if   (( usage >= 95 )); then color=$r
       elif (( usage >= 75 )); then color=$y
       else                          color=$g
       fi
-      printf "  ${c}%-30s${nc} ${color}%4s${nc} used out of ${w}%4s${nc}\n" \
-        "$mount" "$used" "$total"
+
+      filled=$(( usage * width / 100 ))
+      (( filled > width )) && filled=$width
+      empty=$(( width - filled ))
+
+      bar=""
+      for ((i=0; i<filled; i++)); do bar+="█"; done
+      for ((i=0; i<empty;  i++)); do bar+="░"; done
+
+      printf "  ${c}%-22s${nc} ${color}[%s]${nc} ${color}%3d%%${nc}  ${w}%4s${nc}${d}/${nc}${w}%-4s${nc}\n" \
+        "$mount" "$bar" "$usage" "$used" "$total"
     done

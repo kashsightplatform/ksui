@@ -53,14 +53,23 @@ cmd::ask() {
 
 cmd::joke() {
   cmd::_need_tgpt || return 1
+  local topics=(programming science animals food coffee space "dad joke" music
+                math cats dogs AI robots aliens pirates ninjas wizards)
+  local t=${topics[RANDOM % ${#topics[@]}]}
+  local nonce=$RANDOM
   printf "${C_YELLOW}😄${C_RESET} "
-  tgpt "Tell me one short, clean, genuinely funny joke. Just the joke, no preamble."
+  tgpt "Tell me ONE fresh short clean genuinely funny joke about $t. Different from your last one. Just the joke, no preamble. [seed=$nonce]"
 }
 
 cmd::fact() {
   cmd::_need_tgpt || return 1
+  local topics=(history biology physics space oceans animals "ancient civilizations"
+                psychology geography chemistry technology music language food
+                mathematics medicine sports "deep sea" insects)
+  local t=${topics[RANDOM % ${#topics[@]}]}
+  local nonce=$RANDOM
   printf "${C_CYAN}💡${C_RESET} "
-  tgpt "Give me one surprising fun fact in 1-2 sentences. No preamble."
+  tgpt "Give me ONE surprising fun fact about $t in 1-2 sentences. Something most people don't know. No preamble. [seed=$nonce]"
 }
 
 cmd::meme() {
