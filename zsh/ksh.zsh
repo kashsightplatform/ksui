@@ -125,26 +125,34 @@ if (( ! ${KSH_SKIP_ALIASES:-0} )); then
 fi
 
 # ── 7. motd on new shell ─────────────────────────────────────────────────
+# Run via precmd so it fires AFTER powerlevel10k's instant-prompt preamble
+# (printing during init triggers the p10k warning). Show it once, on the
+# first prompt redraw, then unhook.
 if (( ! ${KSH_SKIP_MOTD:-0} )) && [[ -o interactive ]]; then
   _ksh_motd="$KSH_HOME/../motd/init.sh"
-  [[ -x $_ksh_motd ]] && "$_ksh_motd"
-  unset _ksh_motd
+  if [[ -r $_ksh_motd ]]; then
+    _ksui_show_motd() {
+      [[ -x $_ksh_motd ]] && "$_ksh_motd" || bash "$_ksh_motd"
+      add-zsh-hook -d precmd _ksui_show_motd
+      unset -f _ksui_show_motd
+    }
+    autoload -Uz add-zsh-hook
+    add-zsh-hook precmd _ksui_show_motd
+  fi
 fi
 
-# ── 8. auto-launch KSUI on new interactive shells ────────────────────────
-# Skip with KSUI_NO_AUTOSTART=1, or inside an existing KSUI session, or in
-# non-interactive / non-login shells (e.g. scp, rsync, vscode-server).
-if (( ! ${KSH_SKIP_AUTOSTART:-0} )) \
-   && [[ -o interactive ]] \
-   && [[ -t 0 ]] && [[ -t 1 ]] \
-   && [[ -z ${KSUI_RUNNING:-} ]] \
-   && [[ -z ${KSUI_NO_AUTOSTART:-} ]] \
-   && [[ $- == *i* ]] \
-   && command -v ksui >/dev/null 2>&1; then
-  export KSUI_RUNNING=1
-  # Run ksui as a child so we drop back into zsh after `exit`.
-  # Wait briefly so zsh finishes wiring up the line editor before ksui
-  # starts reading raw input — prevents lost keystrokes on slow devices.
-  sleep 0.1
-  ksui
+# ── 8. expose KSUI one-shot commands as zsh functions ───────────────────
+# So users can type `weather nairobi`, `joke`, `crypto btc`, etc. directly
+# from any zsh prompt — no login, no REPL, no password. The interactive
+# REPL is still available via plain `ksui`.
+# Opt out with KSH_SKIP_KAI_CMDS=1.
+if (( ! ${KSH_SKIP_KAI_CMDS:-0} )) && command -v ksui >/dev/null 2>&1; then
+  for _kai_cmd in ask joke fact meme news crypto ip define weather sysinfo \
+                  qr note notes todo timer doctor motd banner; do
+    # Skip if the user already has a command/alias by that name.
+    if ! command -v "$_kai_cmd" >/dev/null 2>&1; then
+      eval "${_kai_cmd}() { ksui ${_kai_cmd} \"\$@\"; }"
+    fi
+  done
+  unset _kai_cmd
 fi
