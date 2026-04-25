@@ -204,6 +204,8 @@ say "Checking dependencies (non-destructive — will NOT remove anything you alr
 pkg_install_if_missing git git
 pkg_install_if_missing curl curl
 pkg_install_if_missing unzip unzip
+pkg_install_if_missing coreutils mv
+pkg_install_if_missing gawk awk
 pkg_install_if_missing figlet figlet
 pkg_install_if_missing lolcat lolcat
 pkg_install_if_missing lsd lsd

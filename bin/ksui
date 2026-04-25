@@ -16,6 +16,7 @@ source "$KSUI_HOME/lib/voice.sh"
 source "$KSUI_HOME/lib/sound.sh"
 source "$KSUI_HOME/lib/auth.sh"
 source "$KSUI_HOME/lib/commands.sh"
+[[ -f "$KSUI_HOME/lib/banner.sh" ]] && source "$KSUI_HOME/lib/banner.sh"
 
 export KSUI_VOICE="${KSUI_VOICE:-1}"
 export KSUI_SOUNDS="${KSUI_SOUNDS:-1}"
@@ -78,6 +79,7 @@ ksui::repl() {
       timer)        cmd::timer $args ;;
       doctor)       cmd::doctor ;;
       motd)         ui::banner ;;
+      banner)       cmd::banner $args ;;
       time|date)    date ;;
       ls)           ui::ls $args ;;
       ll)           ui::ll $args ;;
@@ -123,6 +125,7 @@ USAGE:
   ksui timer <minutes>       Pomodoro timer
   ksui doctor                Audit optional deps + KSUI health
   ksui motd                  Print the motd banner
+  ksui banner <text>         Build custom banner (letters/digits only)
   ksui update                Pull latest + re-run installer
   ksui theme [name]          List / switch prompt themes
 
@@ -169,6 +172,7 @@ main() {
     timer)     shift; cmd::timer "$@"; exit $? ;;
     doctor)    cmd::doctor; exit $? ;;
     motd)      ui::banner; exit 0 ;;
+    banner)    shift; cmd::banner "$@"; exit $? ;;
     update)    cmd::update; exit $? ;;
     theme)     shift; cmd::theme "$@"; exit $? ;;
     "")        : ;;

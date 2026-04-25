@@ -10,6 +10,10 @@
 : ${_Z_DATA:=$HOME/.ksh_z}
 
 _z_track() {
+  # Silently no-op when awk or mv aren't installed (common on stock Termux).
+  command -v awk >/dev/null 2>&1 || return 0
+  command -v mv  >/dev/null 2>&1 || return 0
+
   local pwd_now=$PWD
   [[ $pwd_now == $HOME ]] && return       # don't track HOME
   [[ -n ${_Z_EXCLUDE_DIRS+x} ]] && {
@@ -42,6 +46,9 @@ chpwd_functions=(${chpwd_functions[@]} _z_track)
 unalias z 2>/dev/null
 unfunction z 2>/dev/null
 z() {
+  if ! command -v awk >/dev/null 2>&1; then
+    echo "z: awk is required (pkg install gawk)"; return 1
+  fi
   local list=0 children=0 pattern
   while (( $# )); do
     case $1 in

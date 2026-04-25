@@ -130,3 +130,16 @@ if (( ! ${KSH_SKIP_MOTD:-0} )) && [[ -o interactive ]]; then
   [[ -x $_ksh_motd ]] && "$_ksh_motd"
   unset _ksh_motd
 fi
+
+# ── 8. auto-launch KSUI on new interactive shells ────────────────────────
+# Skip with KSUI_NO_AUTOSTART=1, or inside an existing KSUI session, or in
+# non-interactive / non-login shells (e.g. scp, rsync, vscode-server).
+if (( ! ${KSH_SKIP_AUTOSTART:-0} )) \
+   && [[ -o interactive ]] \
+   && [[ -z ${KSUI_RUNNING:-} ]] \
+   && [[ -z ${KSUI_NO_AUTOSTART:-} ]] \
+   && [[ $- == *i* ]] \
+   && command -v ksui >/dev/null 2>&1; then
+  export KSUI_RUNNING=1
+  ksui
+fi

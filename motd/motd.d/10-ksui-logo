@@ -6,6 +6,24 @@ D=$'\033[38;5;39m'
 O=$'\033[38;5;215m'
 R=$'\033[0m'
 
+# If the user has set a custom banner via `ksui banner <text>`, prefer it.
+_KSUI_HOME_GUESS="${KSUI_HOME:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+_KSUI_CUSTOM_BANNER="$_KSUI_HOME_GUESS/assets/banner.txt"
+if [[ -s $_KSUI_CUSTOM_BANNER ]]; then
+  echo
+  _row=0
+  while IFS= read -r _line || [[ -n $_line ]]; do
+    if (( _row < 2 )); then printf '%s%s%s\n' "$C" "$_line" "$R"
+    else                     printf '%s%s%s\n' "$D" "$_line" "$R"
+    fi
+    _row=$((_row + 1))
+  done < "$_KSUI_CUSTOM_BANNER"
+  printf '                     %s⚡ Kashsight • KAI UI ⚡%s\n\n' "$O" "$R"
+  unset _KSUI_HOME_GUESS _KSUI_CUSTOM_BANNER _line _row
+  exit 0
+fi
+unset _KSUI_HOME_GUESS _KSUI_CUSTOM_BANNER
+
 cat <<EOF
 
 ${C} ██╗  ██╗ █████╗ ███████╗██╗  ██╗    ███████╗██╗ ██████╗ ██╗  ██╗████████╗

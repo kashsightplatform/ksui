@@ -1,6 +1,13 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # KSUI — KAI voice (espeak preferred, festival fallback, termux-tts last)
 
+# Load persisted voice preference (overrides default, but env wins if exported)
+if [[ -z ${KSUI_VOICE+x} && -f $HOME/.ksui/voice ]]; then
+  _v=$(<"$HOME/.ksui/voice")
+  case "$_v" in 0|1) export KSUI_VOICE=$_v ;; esac
+  unset _v
+fi
+
 voice::available() {
   command -v espeak >/dev/null 2>&1 || \
   command -v festival >/dev/null 2>&1 || \

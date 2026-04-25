@@ -25,6 +25,7 @@ ${C_GRAY}───────────────────────�
   ${C_GREEN}timer${C_RESET} <min>    Pomodoro timer with voice alert
   ${C_GREEN}doctor${C_RESET}         Audit optional deps + KSUI health
   ${C_GREEN}motd${C_RESET}           Reprint the banner
+  ${C_GREEN}banner${C_RESET} <text>   Build a custom banner (a-z/0-9 only)
   ${C_GREEN}time${C_RESET} / ${C_GREEN}date${C_RESET}    Current date and time
   ${C_GREEN}ls${C_RESET} / ${C_GREEN}ll${C_RESET}       List files with icons
   ${C_GREEN}cd${C_RESET} <dir>       Change directory
@@ -399,11 +400,37 @@ cmd::doctor() {
 }
 
 cmd::voice_toggle() {
+  local cfg="$HOME/.ksui/voice"
   case "${1:-}" in
-    on)  export KSUI_VOICE=1; ui::say_status OK "Voice enabled"; voice::say "Voice online.";;
-    off) export KSUI_VOICE=0; ui::say_status OK "Voice muted";;
-    *)   ui::say_status INFO "Voice is currently: $([[ ${KSUI_VOICE:-1} -eq 1 ]] && echo on || echo off)";;
+    on)
+      export KSUI_VOICE=1
+      mkdir -p "$(dirname "$cfg")"
+      printf '1\n' > "$cfg"
+      ui::say_status OK "Voice enabled (saved)"
+      voice::say "Voice online."
+      ;;
+    off)
+      export KSUI_VOICE=0
+      mkdir -p "$(dirname "$cfg")"
+      printf '0\n' > "$cfg"
+      ui::say_status OK "Voice muted (saved)"
+      ;;
+    *)
+      ui::say_status INFO "Voice is currently: $([[ ${KSUI_VOICE:-1} -eq 1 ]] && echo on || echo off)"
+      ;;
   esac
+}
+
+cmd::banner() {
+  local text="$*"
+  if [[ -z $text ]]; then
+    ui::say_status WARN "Usage: banner <text>   (letters/digits only, no spaces)"
+    return 1
+  fi
+  if ! command -v banner::build >/dev/null 2>&1; then
+    [[ -f "$KSUI_HOME/lib/banner.sh" ]] && source "$KSUI_HOME/lib/banner.sh"
+  fi
+  banner::build "$text"
 }
 
 cmd::whoami() {
