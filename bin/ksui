@@ -33,13 +33,24 @@ ksui::boot_sequence() {
     "handshake with tgpt"
     "authentication ready"
   )
-  for s in "${steps[@]}"; do
-    sleep 0.18
-    ui::say_status OK "$s"
-    sound::beep
-  done
-  sleep 0.3
+  # Fast path: skip per-step animation when KSUI_FAST_BOOT=1 (default on)
+  if [[ ${KSUI_FAST_BOOT:-1} -eq 1 ]]; then
+    for s in "${steps[@]}"; do ui::say_status OK "$s"; done
+  else
+    for s in "${steps[@]}"; do
+      sleep 0.18
+      ui::say_status OK "$s"
+      sound::beep
+    done
+    sleep 0.3
+  fi
   echo
+  # Drain any keystrokes the user typed during boot — otherwise they leak
+  # into the upcoming auth prompt and trigger phantom failed logins.
+  if [[ -t 0 ]]; then
+    stty sane 2>/dev/null
+    while IFS= read -r -t 0 -n 1000 _drain 2>/dev/null; do :; done
+  fi
 }
 
 ksui::post_login() {

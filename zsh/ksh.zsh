@@ -136,10 +136,15 @@ fi
 # non-interactive / non-login shells (e.g. scp, rsync, vscode-server).
 if (( ! ${KSH_SKIP_AUTOSTART:-0} )) \
    && [[ -o interactive ]] \
+   && [[ -t 0 ]] && [[ -t 1 ]] \
    && [[ -z ${KSUI_RUNNING:-} ]] \
    && [[ -z ${KSUI_NO_AUTOSTART:-} ]] \
    && [[ $- == *i* ]] \
    && command -v ksui >/dev/null 2>&1; then
   export KSUI_RUNNING=1
+  # Run ksui as a child so we drop back into zsh after `exit`.
+  # Wait briefly so zsh finishes wiring up the line editor before ksui
+  # starts reading raw input — prevents lost keystrokes on slow devices.
+  sleep 0.1
   ksui
 fi

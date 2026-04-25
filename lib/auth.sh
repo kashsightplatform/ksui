@@ -84,6 +84,16 @@ auth::login() {
   # shellcheck disable=SC1090
   source "$KSUI_AUTH"
 
+  # If stdin isn't a real terminal (e.g. ksui was auto-launched in a context
+  # where the parent shell still owns the line editor), bail out gracefully
+  # instead of burning through 3 phantom "empty password" attempts.
+  if [[ ! -t 0 ]]; then
+    ui::say_status WARN "No interactive terminal — skipping auth."
+    ui::say_status INFO "Run 'ksui' manually to log in."
+    return 1
+  fi
+  stty sane 2>/dev/null
+
   local tries=3 u p
   while (( tries > 0 )); do
     ui::hr
