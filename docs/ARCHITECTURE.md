@@ -12,7 +12,7 @@ ksui/
 │   └── commands.sh           # REPL command implementations
 ├── assets/
 │   ├── banner.txt            # small KSUI ASCII logo
-│   ├── colors.properties     # JARVIS-blue Termux theme
+│   ├── colors.properties     # KAI-blue Termux theme
 │   ├── termux.properties     # 3-row extra-keys layout
 │   ├── memes.txt             # bundled meme URLs (offline fallback)
 │   └── fonts/FIRACODE_NERD.md # pointer to the Nerd Font upstream
@@ -31,7 +31,7 @@ ksui/
 │   │   ├── z/                # frecent directory jump
 │   │   └── fzf/              # Ctrl-R, Ctrl-T, Alt-C
 │   └── themes/
-│       ├── ksui.zsh-theme    # JARVIS-blue 2-line (default)
+│       ├── ksui.zsh-theme    # KAI-blue 2-line (default)
 │       ├── minimal.zsh-theme # single-line, no git
 │       └── cyberpunk.zsh-theme # neon magenta/green
 ├── install/

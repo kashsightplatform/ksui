@@ -43,7 +43,7 @@ ${C_ORANGE}${C_BOLD}⚡ Made by KASHSIGHT ⚡${C_RESET}
 ${C_GRAY}────────────────────────${C_RESET}
   ${C_CYAN}🎬 YouTube  ${C_RESET} youtube.com/@kashsight
   ${C_MAGENTA}📸 Instagram${C_RESET} instagram.com/kashsight
-  ${C_BLUE}🐦 X/Twitter${C_RESET} x.com/kashsight
+  ${C_BLUE}📘 Facebook ${C_RESET} facebook.com/kashsight
   ${C_GREEN}💻 GitHub   ${C_RESET} github.com/kashsight
 ${C_GRAY}────────────────────────${C_RESET}
 EOF

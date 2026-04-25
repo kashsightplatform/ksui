@@ -1,6 +1,6 @@
 # KSUI — Kashsight UI
 
-> A JARVIS-inspired Termux shell UI + zsh framework, made by **Kashsight**.
+> A KAI-inspired Termux shell UI + zsh framework, made by **Kashsight**.
 > Big motd banner with live sysinfo/time/disk panels, voice greetings, `tgpt`-powered commands, fzf keybinds, three prompt themes, and a safe non-destructive installer.
 
 ```
@@ -10,16 +10,16 @@
  ██╔═██╗ ██╔══██║╚════██║██╔══██║    ╚════██║██║██║   ██║██╔══██║   ██║
  ██║  ██╗██║  ██║███████║██║  ██║    ███████║██║╚██████╔╝██║  ██║   ██║
  ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝    ╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝
-                     ⚡ Kashsight • JARVIS UI ⚡
+                     ⚡ Kashsight • KAI UI ⚡
 ```
 
 ---
 
 ## ✨ What you get
 
-**The `ksui` app** (interactive JARVIS shell):
+**The `ksui` app** (interactive KAI shell):
 - 🔐 First-run account setup with sha256-hashed local credentials
-- 🤖 JARVIS voice greeting on every login (`espeak` / `festival` / termux-tts)
+- 🤖 KAI voice greeting on every login (`espeak` / `festival` / termux-tts)
 - 🎨 Full motd-style banner: system info + date/time + disk panels
 - 🔊 Sox-synthesized sound effects (boot sweep, beeps, access chime)
 - 🧠 Commands backed by `tgpt`: `ask`, `joke`, `fact`
@@ -31,7 +31,7 @@
 - 🎨 Syntax highlighting (green/red for valid/invalid commands)
 - 📍 `z` frecent directory jump
 - 🔍 **fzf** Ctrl-R history, Ctrl-T files, Alt-C cd — all with preview
-- 🎭 Three prompt themes: `ksui` (JARVIS-blue), `minimal`, `cyberpunk`
+- 🎭 Three prompt themes: `ksui` (KAI-blue), `minimal`, `cyberpunk`
 
 **Zero external runtime deps** — we vendor everything. No oh-my-zsh, no powerlevel10k, no external motd repo.
 
@@ -40,13 +40,13 @@
 ## 🚀 Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kashsightplatform/ksui/main/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kashsight/ksui/main/install/install.sh | bash
 ```
 
 The installer:
 1. Installs missing packages (git, curl, lsd, tgpt, espeak, sox, fzf, …) — **never touches versions you already have**
 2. Downloads FiraCode Nerd Font (for icons + glyphs), backing up existing `~/.termux/font.ttf`
-3. Drops our JARVIS-blue `colors.properties` + 3-row extra-keys layout (both backed up)
+3. Drops our KAI-blue `colors.properties` + 3-row extra-keys layout (both backed up)
 4. Patches a managed `# KSUI-BEGIN/END` block into `~/.zshrc`
 5. Symlinks `ksui` into `$PREFIX/bin`
 
@@ -64,7 +64,7 @@ ksui --help     # all modes
 ```
 help                Show the command menu
 about               Maker intro + socials
-ask <q...>          Ask JARVIS anything (tgpt)
+ask <q...>          Ask KAI anything (tgpt)
 joke / fact         AI-generated joke / fun fact
 meme                Random meme (with bundled fallback)
 weather [city]      Weather via wttr.in
@@ -72,7 +72,7 @@ sysinfo             Full system info (neofetch)
 motd                Reprint the banner
 time / date         Current date & time
 ls / ll / cd / clear  (as expected)
-voice on|off        Toggle JARVIS voice
+voice on|off        Toggle KAI voice
 theme [name]        List or switch prompt themes
 update              git pull + re-run installer
 whoami              Show current KSUI user
@@ -103,7 +103,7 @@ ksui update                # self-update
 
 | Theme | Style |
 |---|---|
-| `ksui` (default) | 2-line JARVIS-blue, cyan path + orange git branch |
+| `ksui` (default) | 2-line KAI-blue, cyan path + orange git branch |
 | `minimal` | Single-line `%1~ ❯`, no git |
 | `cyberpunk` | Neon magenta/green, `user@host` + exit code + duration |
 
@@ -137,7 +137,7 @@ The installer installs these **only if missing** and never downgrades:
 | `lsd` | iconified `ls`/`ll` | recommended |
 | `tgpt` | `ask` / `joke` / `fact` | recommended |
 | `fzf`, `fd` | Ctrl-R / Ctrl-T / Alt-C | recommended |
-| `espeak` | JARVIS voice | optional |
+| `espeak` | KAI voice | optional |
 | `sox` | sound effects | optional |
 | `figlet`, `lolcat`, `neofetch` | pretty extras | optional |
 | `openssl` | password hashing (falls back to `sha256sum`) | optional |
@@ -187,7 +187,7 @@ ksui/
 │   ├── plugins/          autosuggestions, syntax-highlighting, z, fzf
 │   ├── themes/           ksui, minimal, cyberpunk
 │   └── zshrc.template    the KSUI-BEGIN/END block
-├── assets/               banner, JARVIS-blue colors, extra-keys, memes
+├── assets/               banner, KAI-blue colors, extra-keys, memes
 └── install/              install.sh + uninstall.sh
 ```
 
@@ -201,8 +201,8 @@ Made with ⚡ by **KASHSIGHT**
 
 - 🎬 YouTube — [youtube.com/@kashsight](https://youtube.com/@kashsight)
 - 📸 Instagram — [instagram.com/kashsight](https://instagram.com/kashsight)
-- 🐦 X/Twitter — [x.com/kashsight](https://x.com/kashsight)
-- 💻 GitHub — [github.com/kashsightplatform](https://github.com/kashsightplatform)
+- 📘 Facebook — [facebook.com/kashsight](https://facebook.com/kashsight)
+- 💻 GitHub — [github.com/kashsight](https://github.com/kashsight)
 
 ---
 

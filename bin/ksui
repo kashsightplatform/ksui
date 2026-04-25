@@ -65,8 +65,18 @@ ksui::repl() {
       joke)         cmd::joke ;;
       meme)         cmd::meme ;;
       fact)         cmd::fact ;;
+      news)         cmd::news ;;
+      crypto)       cmd::crypto $args ;;
+      ip)           cmd::ip ;;
+      define)       cmd::define $args ;;
       weather)      cmd::weather $args ;;
       sysinfo|sys)  cmd::sysinfo ;;
+      qr)           cmd::qr $args ;;
+      note)         cmd::note $args ;;
+      notes)        cmd::notes ;;
+      todo)         cmd::todo $args ;;
+      timer)        cmd::timer $args ;;
+      doctor)       cmd::doctor ;;
       motd)         ui::banner ;;
       time|date)    date ;;
       ls)           ui::ls $args ;;
@@ -97,15 +107,24 @@ ksui::usage() {
 ksui — Kashsight UI shell
 
 USAGE:
-  ksui                    Launch interactive shell (login + REPL)
-  ksui ask <question...>  One-shot: ask JARVIS, print answer, exit
-  ksui joke               One-shot: print a joke and exit
-  ksui fact               One-shot: print a fun fact and exit
-  ksui weather [city]     One-shot: print weather and exit
-  ksui sysinfo            One-shot: print system info and exit
-  ksui motd               One-shot: print the motd banner and exit
-  ksui update             Pull latest from GitHub + re-run installer
-  ksui theme [name]       List or switch prompt themes (jarvis|minimal|cyberpunk)
+  ksui                       Launch interactive shell (login + REPL)
+  ksui ask <question...>     One-shot: ask KAI, print answer, exit
+  ksui joke | fact           One-shot: joke / fact (tgpt)
+  ksui news                  Top headlines (Hacker News)
+  ksui crypto [coin]         Crypto price (CoinGecko)
+  ksui ip                    Public IP + geo
+  ksui define <word>         Dictionary lookup
+  ksui weather [city]        Current weather (wttr.in)
+  ksui sysinfo               System info
+  ksui qr <text>             Render a terminal QR code
+  ksui note <text>           Append a timestamped note
+  ksui notes                 Show all notes
+  ksui todo [text|done N]    Todo list
+  ksui timer <minutes>       Pomodoro timer
+  ksui doctor                Audit optional deps + KSUI health
+  ksui motd                  Print the motd banner
+  ksui update                Pull latest + re-run installer
+  ksui theme [name]          List / switch prompt themes
 
 FLAGS:
   --no-voice      Start with voice muted
@@ -121,7 +140,7 @@ main() {
   local passthrough=()
   while (( $# )); do
     case "${1:-}" in
-      --version|-v) echo "ksui 0.2.0"; exit 0 ;;
+      --version|-v) echo "ksui 0.3.0"; exit 0 ;;
       --help|-h)    ksui::usage; exit 0 ;;
       --reset-auth) auth::reset; exit 0 ;;
       --no-voice)   export KSUI_VOICE=0; shift ;;
@@ -136,12 +155,23 @@ main() {
     ask)       shift; cmd::ask "$@"; exit $? ;;
     joke)      cmd::joke; exit $? ;;
     fact)      cmd::fact; exit $? ;;
+    meme)      cmd::meme; exit $? ;;
+    news)      cmd::news; exit $? ;;
+    crypto)    shift; cmd::crypto "$@"; exit $? ;;
+    ip)        cmd::ip; exit $? ;;
+    define)    shift; cmd::define "$@"; exit $? ;;
     weather)   shift; cmd::weather "$@"; exit $? ;;
     sysinfo)   cmd::sysinfo; exit $? ;;
+    qr)        shift; cmd::qr "$@"; exit $? ;;
+    note)      shift; cmd::note "$@"; exit $? ;;
+    notes)     cmd::notes; exit $? ;;
+    todo)      shift; cmd::todo "$@"; exit $? ;;
+    timer)     shift; cmd::timer "$@"; exit $? ;;
+    doctor)    cmd::doctor; exit $? ;;
     motd)      ui::banner; exit 0 ;;
     update)    cmd::update; exit $? ;;
     theme)     shift; cmd::theme "$@"; exit $? ;;
-    "")        : ;;   # fallthrough to interactive
+    "")        : ;;
     *)         ksui::usage; exit 1 ;;
   esac
 

@@ -1,4 +1,4 @@
-# KSUI prompt theme — JARVIS-blue, cwd left, clock right
+# KSUI prompt theme — KAI-blue, cwd left, clock right
 #
 # Preview:
 #   ~                                                   19:33:24

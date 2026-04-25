@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/env bash
 # KSUI installer
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/kashsightplatform/ksui/main/install/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/kashsight/ksui/main/install/install.sh | bash
 #
 # Non-destructive: only installs missing packages, never removes or
 # downgrades anything you already have. Existing Termux font and color
@@ -9,7 +9,7 @@
 # uninstaller can restore them.
 set -euo pipefail
 
-REPO="${KSUI_REPO:-https://github.com/kashsightplatform/ksui.git}"
+REPO="${KSUI_REPO:-https://github.com/kashsight/ksui.git}"
 PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
 INSTALL_DIR="${KSUI_INSTALL_DIR:-$HOME/.ksui-app}"
 BIN_LINK="$PREFIX/bin/ksui"
@@ -85,7 +85,7 @@ install_font() {
   need_cmd curl || { warn "curl missing and no bundled font, cannot install font"; return; }
   backup_file "$font_dest"
 
-  info "Downloading FiraCode Nerd Font (required for icons + JARVIS glyphs)…"
+  info "Downloading FiraCode Nerd Font (required for icons + KAI glyphs)…"
   local tmp
   tmp="$(mktemp -d "${TMPDIR:-$PREFIX/tmp}/ksui-font.XXXXXX")" || {
     warn "Could not create tempdir, skipping font"; return; }
@@ -119,7 +119,7 @@ install_colors() {
   local dest="$TERMUX_DIR/colors.properties"
   backup_file "$dest"
   cp "$INSTALL_DIR/assets/colors.properties" "$dest" && \
-    say "Installed JARVIS-blue color scheme"
+    say "Installed KAI-blue color scheme"
 }
 
 install_extra_keys() {
@@ -199,6 +199,8 @@ pkg_install_if_missing openssl-tool openssl
 pkg_install_if_missing sox play
 pkg_install_if_missing fzf fzf
 pkg_install_if_missing fd fd
+pkg_install_if_missing qrencode qrencode
+pkg_install_if_missing termux-api termux-notification
 
 # --- 2. fetch repo ---
 if [[ -d $INSTALL_DIR/.git ]]; then

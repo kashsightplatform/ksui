@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/env bash
-# KSUI — JARVIS voice (espeak preferred, festival fallback, termux-tts last)
+# KSUI — KAI voice (espeak preferred, festival fallback, termux-tts last)
 
 voice::available() {
   command -v espeak >/dev/null 2>&1 || \
@@ -13,7 +13,7 @@ voice::say() {
   [[ ${KSUI_VOICE:-1} -eq 0 ]] && return 0
 
   if command -v espeak >/dev/null 2>&1; then
-    # Deep slow JARVIS-ish voice
+    # Deep slow KAI-ish voice
     espeak -v en-gb -s 150 -p 40 -a 180 "$msg" 2>/dev/null &
   elif command -v festival >/dev/null 2>&1; then
     echo "$msg" | festival --tts 2>/dev/null &
