@@ -176,6 +176,21 @@ install_motd() {
   # The KSH framework sources init.sh on new interactive shells automatically.
   chmod +x "$INSTALL_DIR/motd/init.sh" "$INSTALL_DIR/motd/motd.d/"* 2>/dev/null || true
   say "KSUI motd ready (shown on new interactive shells)"
+
+  # Disable other motds so KSUI's is the only one that shows.
+  # We comment out the motd line in $PREFIX/etc/zprofile (used by
+  # GR3YH4TT3R93/termux-motd and similar) and back it up first.
+  local zp="$PREFIX/etc/zprofile"
+  if [[ -f $zp ]] && grep -qE '^[^#]*etc/motd/init\.sh' "$zp"; then
+    backup_file "$zp"
+    sed -i -E 's|^([^#]*etc/motd/init\.sh.*)$|# \1  # disabled by KSUI|' "$zp"
+    say "Disabled global motd in $zp (backup: $zp.ksui-backup)"
+  fi
+  # Termux's plain /etc/motd file (if it exists as a regular file): silence
+  # by ensuring ~/.hushlogin exists.
+  if [[ -f $PREFIX/etc/motd && ! -e $HOME/.hushlogin ]]; then
+    : > "$HOME/.hushlogin" && say "Created ~/.hushlogin to silence default Termux motd"
+  fi
 }
 
 banner

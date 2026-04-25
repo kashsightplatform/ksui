@@ -64,6 +64,8 @@ fi
 restore_or_remove "$TERMUX_DIR/font.ttf"
 restore_or_remove "$TERMUX_DIR/colors.properties"
 restore_or_remove "$TERMUX_DIR/termux.properties"
+# Restore the global zprofile motd hook if KSUI disabled it
+restore_or_remove "$PREFIX/etc/zprofile"
 
 # 2b. strip KSUI block from ~/.zshrc (including its header comments + surrounding blank lines)
 zshrc="$HOME/.zshrc"
