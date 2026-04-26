@@ -1,9 +1,26 @@
 #!/data/data/com.termux/files/usr/bin/env bash
-# KSUI logo — shown on every new shell
+# KSUI logo — colors follow the active theme (~/.ksui/theme).
 
-C=$'\033[38;5;51m'
-D=$'\033[38;5;39m'
-O=$'\033[38;5;215m'
+_theme="ksui"
+[[ -r "$HOME/.ksui/theme" ]] && _theme=$(<"$HOME/.ksui/theme")
+
+case "$_theme" in
+  forest)
+    C=$'\033[38;5;34m'   # bright green
+    D=$'\033[38;5;28m'   # dark green
+    O=$'\033[38;5;220m'  # gold accent
+    ;;
+  sky)
+    C=$'\033[38;5;117m'  # sky blue
+    D=$'\033[38;5;111m'  # softer blue
+    O=$'\033[38;5;223m'  # warm accent
+    ;;
+  *)
+    C=$'\033[38;5;51m'   # cyan
+    D=$'\033[38;5;39m'   # blue
+    O=$'\033[38;5;215m'  # orange
+    ;;
+esac
 R=$'\033[0m'
 
 # If the user has set a custom banner via `ksui banner <text>`, prefer it.
@@ -19,7 +36,7 @@ if [[ -s $_KSUI_CUSTOM_BANNER ]]; then
     _row=$((_row + 1))
   done < "$_KSUI_CUSTOM_BANNER"
   printf '                     %s⚡ Kashsight • KAI UI ⚡%s\n\n' "$O" "$R"
-  unset _KSUI_HOME_GUESS _KSUI_CUSTOM_BANNER _line _row
+  unset _KSUI_HOME_GUESS _KSUI_CUSTOM_BANNER _line _row _theme
   exit 0
 fi
 unset _KSUI_HOME_GUESS _KSUI_CUSTOM_BANNER
@@ -35,3 +52,4 @@ ${D} ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  
                      ${O}⚡ Kashsight • KAI UI ⚡${R}
 
 EOF
+unset _theme
