@@ -191,6 +191,7 @@ main() {
   esac
 
   # Interactive mode
+  export KSUI_REPL=1
   ksui::boot_sequence
   auth::login || exit 1
   ksui::post_login

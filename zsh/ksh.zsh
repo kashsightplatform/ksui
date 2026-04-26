@@ -124,6 +124,17 @@ if (( ! ${KSH_SKIP_ALIASES:-0} )); then
   fi
 fi
 
+# ── 6b. session lock (username + password on shell startup) ─────────────
+# Opt out: `touch ~/.ksui/no-lock`, or set KSH_SKIP_AUTH=1 before sourcing.
+if (( ! ${KSH_SKIP_AUTH:-0} )) && [[ -o interactive && -z $KSUI_REPL ]]; then
+  if [[ -x "$KSH_HOME/../lib/session-auth.sh" ]]; then
+    "$KSH_HOME/../lib/session-auth.sh" || {
+      print -u2 "ksui: session locked"
+      exec sleep 86400
+    }
+  fi
+fi
+
 # ── 7. motd on new shell ─────────────────────────────────────────────────
 # Run via precmd so it fires AFTER powerlevel10k's instant-prompt preamble
 # (printing during init triggers the p10k warning). Show it once, on the
@@ -139,6 +150,22 @@ if (( ! ${KSH_SKIP_MOTD:-0} )) && [[ -o interactive ]]; then
     autoload -Uz add-zsh-hook
     add-zsh-hook precmd _ksui_show_motd
   fi
+fi
+
+# ── 7b. silence Termux's "pkg install X" suggestions ─────────────────────
+# Termux's /etc/zshrc installs a command_not_found_handler that nags about
+# installing packages on every miss — including spurious misses caused by a
+# stale command hash. KSUI is a no-nag UI: drop the handler and refresh the
+# hash table on each chdir so PATH lookups stay fresh.
+if (( ! ${KSH_SKIP_NONAG:-0} )); then
+  command_not_found_handler() {
+    print -u2 "ksui: command not found: $1"
+    return 127
+  }
+  autoload -Uz add-zsh-hook
+  _ksh_rehash() { rehash 2>/dev/null; }
+  add-zsh-hook chpwd _ksh_rehash
+  rehash 2>/dev/null
 fi
 
 # ── 8. expose KSUI one-shot commands as zsh functions ───────────────────

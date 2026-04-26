@@ -30,15 +30,17 @@ _z_track() {
   local tmp="${_Z_DATA}.$$"
   local now=$(date +%s) found=0
   : > "$tmp"
+  # NB: `path` is a special array tied to $PATH in zsh — never read into it.
   if [[ -f $_Z_DATA ]]; then
-    while IFS='|' read -r path rank time; do
-      [[ -z $path ]] && continue
-      if [[ $path == "$pwd_now" ]]; then
-        rank=$("$_KSH_Z_AWK" "BEGIN{print ${rank:-0} + 1}" 2>/dev/null)
-        time=$now
+    local zpath zrank ztime
+    while IFS='|' read -r zpath zrank ztime; do
+      [[ -z $zpath ]] && continue
+      if [[ $zpath == "$pwd_now" ]]; then
+        zrank=$("$_KSH_Z_AWK" "BEGIN{print ${zrank:-0} + 1}" 2>/dev/null)
+        ztime=$now
         found=1
       fi
-      printf '%s|%s|%s\n' "$path" "$rank" "$time" >> "$tmp"
+      printf '%s|%s|%s\n' "$zpath" "$zrank" "$ztime" >> "$tmp"
     done < "$_Z_DATA"
   fi
   (( found )) || printf '%s|%s|%s\n' "$pwd_now" "1" "$now" >> "$tmp"
@@ -72,16 +74,16 @@ z() {
   # frecent = rank * 1/(age+1)  (simple version of Z's algorithm)
   "$_KSH_Z_AWK" -F'|' -v pat="$pattern" -v pwd="$PWD" -v children="$children" -v now="$now" -v list="$list" '
     {
-      path=$1; rank=$2+0; time=$3+0
-      if (!path) next
-      if (children && index(path, pwd"/") != 1) next
-      if (pat && index(path, pat) == 0) next
-      age = now - time
+      p=$1; rank=$2+0; t=$3+0
+      if (!p) next
+      if (children && index(p, pwd"/") != 1) next
+      if (pat && index(p, pat) == 0) next
+      age = now - t
       score = rank * (1 / (1 + age/3600))
       if (list) {
-        printf "%8.2f  %s\n", score, path
+        printf "%8.2f  %s\n", score, p
       } else if (score > best) {
-        best = score; best_path = path
+        best = score; best_path = p
       }
     }
     END { if (!list && best_path) print best_path }
