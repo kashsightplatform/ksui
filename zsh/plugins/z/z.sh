@@ -9,10 +9,15 @@
 
 : ${_Z_DATA:=$HOME/.ksh_z}
 
+# Resolve awk/mv to absolute paths once at load time so a later PATH change
+# (or stale zsh command hash) cannot trigger Termux's command-not-found
+# handler on every cd / keystroke. Empty string => not available, no-op.
+typeset -g _KSH_Z_AWK="$(command -v awk 2>/dev/null)"
+typeset -g _KSH_Z_MV="$(command -v mv 2>/dev/null)"
+
 _z_track() {
   # Silently no-op when awk or mv aren't installed (common on stock Termux).
-  command -v awk >/dev/null 2>&1 || return 0
-  command -v mv  >/dev/null 2>&1 || return 0
+  [[ -x $_KSH_Z_AWK && -x $_KSH_Z_MV ]] || return 0
 
   local pwd_now=$PWD
   [[ $pwd_now == $HOME ]] && return       # don't track HOME
@@ -29,7 +34,7 @@ _z_track() {
     while IFS='|' read -r path rank time; do
       [[ -z $path ]] && continue
       if [[ $path == "$pwd_now" ]]; then
-        rank=$(awk "BEGIN{print ${rank:-0} + 1}")
+        rank=$("$_KSH_Z_AWK" "BEGIN{print ${rank:-0} + 1}" 2>/dev/null)
         time=$now
         found=1
       fi
@@ -37,7 +42,7 @@ _z_track() {
     done < "$_Z_DATA"
   fi
   (( found )) || printf '%s|%s|%s\n' "$pwd_now" "1" "$now" >> "$tmp"
-  mv -f "$tmp" "$_Z_DATA"
+  "$_KSH_Z_MV" -f "$tmp" "$_Z_DATA" 2>/dev/null
 }
 
 # Hook into chpwd
@@ -46,7 +51,7 @@ chpwd_functions=(${chpwd_functions[@]} _z_track)
 unalias z 2>/dev/null
 unfunction z 2>/dev/null
 z() {
-  if ! command -v awk >/dev/null 2>&1; then
+  if [[ ! -x $_KSH_Z_AWK ]]; then
     echo "z: awk is required (pkg install gawk)"; return 1
   fi
   local list=0 children=0 pattern
@@ -65,7 +70,7 @@ z() {
   local best_path="" best_score=0
 
   # frecent = rank * 1/(age+1)  (simple version of Z's algorithm)
-  awk -F'|' -v pat="$pattern" -v pwd="$PWD" -v children="$children" -v now="$now" -v list="$list" '
+  "$_KSH_Z_AWK" -F'|' -v pat="$pattern" -v pwd="$PWD" -v children="$children" -v now="$now" -v list="$list" '
     {
       path=$1; rank=$2+0; time=$3+0
       if (!path) next

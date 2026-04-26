@@ -3,10 +3,13 @@
 
 command -v fzf >/dev/null 2>&1 || return 0
 
+typeset -g _KSH_FZF_AWK="$(command -v awk 2>/dev/null)"
+
 # ── Ctrl-R: fuzzy history search ─────────────────────────────────────────
 _ksh_fzf_history() {
+  [[ -x $_KSH_FZF_AWK ]] || { zle -M "fzf-history needs awk (pkg install gawk)"; return; }
   local selected
-  selected=$(fc -rl 1 | awk '{ $1=""; sub(/^ /,""); print }' | \
+  selected=$(fc -rl 1 | "$_KSH_FZF_AWK" '{ $1=""; sub(/^ /,""); print }' 2>/dev/null | \
              fzf --height 40% --reverse --no-multi \
                  --prompt='history> ' \
                  --color='bg+:#1a1f2e,fg+:#C8D3F5,hl+:#4FC3F7,prompt:#FF7A93' \

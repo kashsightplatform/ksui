@@ -7,14 +7,19 @@
 : ${KSH_AUTOSUGGEST_STRATEGY:=history}
 
 typeset -g _ksh_sugg=""
+# Resolve awk to an absolute path once. If unavailable (stock Termux without
+# gawk), suggestions silently no-op instead of spamming command-not-found
+# on every keystroke.
+typeset -g _KSH_SUGG_AWK="$(command -v awk 2>/dev/null)"
 
 _ksh_suggest() {
   _ksh_sugg=""
   [[ -z $BUFFER ]] && { POSTDISPLAY=""; return; }
+  [[ -x $_KSH_SUGG_AWK ]] || { POSTDISPLAY=""; return; }
 
   local match
   # Search history for a command beginning with current buffer
-  match=$(fc -ln 1 2>/dev/null | awk -v q="$BUFFER" '
+  match=$(fc -ln 1 2>/dev/null | "$_KSH_SUGG_AWK" -v q="$BUFFER" '
     {
       line=$0
       if (index(line,q)==1 && length(line)>length(q)) {
@@ -22,7 +27,7 @@ _ksh_suggest() {
         exit
       }
     }
-  ')
+  ' 2>/dev/null)
 
   if [[ -n $match ]]; then
     _ksh_sugg="${match#$BUFFER}"
