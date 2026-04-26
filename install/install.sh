@@ -23,6 +23,13 @@ KSUI_SKIP_KEYS="${KSUI_SKIP_KEYS:-0}"
 KSUI_SKIP_KSH="${KSUI_SKIP_KSH:-0}"
 KSUI_SKIP_MOTD="${KSUI_SKIP_MOTD:-0}"
 
+# Update mode: when set, the installer behaves non-destructively — it only
+# pulls upstream code/feature/fix changes and refreshes the KSUI managed
+# block in ~/.zshrc. It WILL NOT overwrite the user's font, colors, theme
+# selection, banner, or extra-keys layout, even if those have backups.
+# `cmd::update` sets this; first-time installs leave it unset.
+KSUI_UPDATE_MODE="${KSUI_UPDATE_MODE:-0}"
+
 say()  { printf "\033[38;5;120m✔\033[0m %s\n" "$*"; }
 warn() { printf "\033[38;5;221m⚠\033[0m %s\n" "$*"; }
 err()  { printf "\033[38;5;203m✖\033[0m %s\n" "$*" >&2; }
@@ -70,6 +77,10 @@ backup_file() {
 
 install_font() {
   (( KSUI_SKIP_FONT )) && { info "Skipping font install (KSUI_SKIP_FONT=1)"; return; }
+  if (( KSUI_UPDATE_MODE )) && [[ -f "$TERMUX_DIR/font.ttf" ]]; then
+    info "Update mode: keeping existing font ($TERMUX_DIR/font.ttf)"
+    return
+  fi
   mkdir -p "$TERMUX_DIR"
 
   local font_dest="$TERMUX_DIR/font.ttf"
@@ -114,6 +125,10 @@ install_font() {
 install_colors() {
   (( KSUI_SKIP_COLORS )) && { info "Skipping color scheme (KSUI_SKIP_COLORS=1)"; return; }
   [[ -f "$INSTALL_DIR/assets/colors.properties" ]] || return 0
+  if (( KSUI_UPDATE_MODE )) && [[ -f "$TERMUX_DIR/colors.properties" ]]; then
+    info "Update mode: keeping existing color scheme"
+    return
+  fi
   mkdir -p "$TERMUX_DIR"
 
   local dest="$TERMUX_DIR/colors.properties"
@@ -125,6 +140,10 @@ install_colors() {
 install_extra_keys() {
   (( KSUI_SKIP_KEYS )) && { info "Skipping extra-keys layout (KSUI_SKIP_KEYS=1)"; return; }
   [[ -f "$INSTALL_DIR/assets/termux.properties" ]] || return 0
+  if (( KSUI_UPDATE_MODE )) && [[ -f "$TERMUX_DIR/termux.properties" ]]; then
+    info "Update mode: keeping existing extra-keys layout"
+    return
+  fi
   mkdir -p "$TERMUX_DIR"
 
   local dest="$TERMUX_DIR/termux.properties"
@@ -148,14 +167,16 @@ install_ksh() {
   local tmpl="$INSTALL_DIR/zsh/zshrc.template"
   [[ -f $tmpl ]] || return 0
 
-  # Build the KSUI block
+  local rendered
+  rendered=$(sed "s|__KSUI_INSTALL_DIR__|$INSTALL_DIR|g" "$tmpl")
+
+  # Extract just the managed block from the rendered template
   local block
-  block=$(sed "s|__KSUI_INSTALL_DIR__|$INSTALL_DIR|g" "$tmpl")
+  block=$(awk '/# KSUI-BEGIN/,/# KSUI-END/' <<<"$rendered")
 
-  # Backup existing .zshrc (once)
-  [[ -f $zshrc ]] && backup_file "$zshrc"
-
-  # If already has a KSUI block, replace it; else append
+  # Case A — existing .zshrc already has KSUI markers: only refresh the
+  # managed block, never touch the rest. Safe for both fresh installs and
+  # `ksui update`.
   if [[ -f $zshrc ]] && grep -q '# KSUI-BEGIN' "$zshrc"; then
     local tmp="${zshrc}.ksui.tmp"
     awk -v block="$block" '
@@ -163,11 +184,25 @@ install_ksh() {
       /# KSUI-END/   { in_block=0; next }
       !in_block      { print }
     ' "$zshrc" > "$tmp" && mv "$tmp" "$zshrc"
-    say "Updated KSUI block in $zshrc"
-  else
-    printf '\n%s\n' "$block" >> "$zshrc"
-    say "Appended KSUI block to $zshrc"
+    say "Refreshed KSUI block in $zshrc"
+    return
   fi
+
+  # Case B — update mode but no KSUI block found: append the block, do
+  # NOT wipe the user's .zshrc. They asked us to fix bugs, not their dotfiles.
+  if (( KSUI_UPDATE_MODE )); then
+    [[ -f $zshrc ]] && backup_file "$zshrc"
+    printf '\n%s\n' "$block" >> "$zshrc"
+    say "Appended KSUI block to $zshrc (update mode)"
+    return
+  fi
+
+  # Case C — fresh install: back up the existing .zshrc once, then write
+  # the full KSUI .zshrc on top. The user explicitly invoked the installer.
+  [[ -f $zshrc ]] && backup_file "$zshrc"
+  printf '%s\n' "$rendered" > "$zshrc"
+  say "Installed KSUI .zshrc (backup: $zshrc.ksui-backup)"
+  info "Personal overrides? Put them in ~/.zshrc.local — sourced automatically."
 }
 
 install_motd() {

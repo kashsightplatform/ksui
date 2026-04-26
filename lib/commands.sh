@@ -443,17 +443,49 @@ cmd::update() {
     ui::say_status INFO "Re-run the installer manually to update."
     return 1
   fi
-  ui::say_status INFO "Fetching latest from origin…"
-  if git -C "$KSUI_HOME" pull --ff-only; then
-    ui::say_status OK "KSUI is now up to date."
-    if [[ -x $KSUI_HOME/install/install.sh ]]; then
-      ui::say_status INFO "Re-running installer to refresh assets…"
-      KSUI_REPO="$KSUI_HOME" KSUI_INSTALL_DIR="$KSUI_HOME" \
-        bash "$KSUI_HOME/install/install.sh" || true
+
+  # Stash any user-modified tracked files so `git pull --ff-only` can't
+  # blow away their banner / theme tweaks. We restore them after pulling.
+  local stashed=0
+  if [[ -n "$(git -C "$KSUI_HOME" status --porcelain 2>/dev/null)" ]]; then
+    ui::say_status INFO "Saving your local tweaks (banner, themes, etc.)…"
+    if git -C "$KSUI_HOME" stash push -u -m "ksui-update-$(date +%s)" \
+         >/dev/null 2>&1; then
+      stashed=1
+    else
+      ui::say_status WARN "Could not stash local changes — aborting update."
+      return 1
     fi
-  else
+  fi
+
+  ui::say_status INFO "Fetching latest from origin…"
+  if ! git -C "$KSUI_HOME" pull --ff-only; then
     ui::say_status ERR "git pull failed — resolve conflicts and retry."
+    (( stashed )) && git -C "$KSUI_HOME" stash pop >/dev/null 2>&1 || true
     return 1
+  fi
+
+  # Restore the user's tweaks on top of the new code. If a tweak now
+  # conflicts with an upstream change, leave the conflict in-tree for the
+  # user to resolve — better than silently losing their work.
+  if (( stashed )); then
+    if git -C "$KSUI_HOME" stash pop >/dev/null 2>&1; then
+      ui::say_status OK "Restored your local tweaks on top of the update."
+    else
+      ui::say_status WARN "Some of your tweaks conflicted with upstream — "
+      ui::say_status WARN "see 'cd $KSUI_HOME && git status' to resolve."
+    fi
+  fi
+
+  ui::say_status OK "KSUI is now up to date."
+
+  # Re-run the installer in *update mode*: refreshes code-side assets and
+  # the managed .zshrc block, but never touches font/colors/extra-keys/
+  # theme selection that the user may have customized.
+  if [[ -x $KSUI_HOME/install/install.sh ]]; then
+    ui::say_status INFO "Refreshing managed bits (non-destructive)…"
+    KSUI_REPO="$KSUI_HOME" KSUI_INSTALL_DIR="$KSUI_HOME" KSUI_UPDATE_MODE=1 \
+      bash "$KSUI_HOME/install/install.sh" || true
   fi
 }
 
