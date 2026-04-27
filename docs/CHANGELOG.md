@@ -27,7 +27,7 @@
 - **Joke / fact** — each call picks a random topic + nonce so tgpt stops
   repeating the same punchline.
 - **Load-average parsing** — robust against `uptime` format variations.
-- Installer / repo URL: `kashsightplatform` → `kashsight` (username change).
+- Installer / repo URL: `kashsight` → `kashsight` (username change).
 - Socials: X/Twitter → Facebook in the maker intro.
 
 ## 0.2.0 — 2026-04-24
